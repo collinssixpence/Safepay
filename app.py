@@ -9,13 +9,17 @@ app = Flask(__name__)
 # Security Key
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'safepay-dev-secret-key-change-in-production')
 
-# Database Configuration (Handles Render/Supabase string & fallbacks gracefully)
+# Database Configuration
 db_url = os.environ.get('DATABASE_URL')
 
-if not db_url or db_url.strip() == "":
+# Clean and validate the URL string
+if db_url:
+    db_url = db_url.strip()
+
+if not db_url:
     db_url = 'sqlite:///safepay.db'
 
-# Fix for SQLAlchemy requiring 'postgresql://' instead of older 'postgres://' schema
+# Fix legacy postgres:// prefix
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
