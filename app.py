@@ -23,6 +23,12 @@ if not db_url:
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
+# Remove pgbouncer query parameters incompatible with psycopg2
+if "?pgbouncer=true" in db_url:
+    db_url = db_url.replace("?pgbouncer=true", "")
+if "&pgbouncer=true" in db_url:
+    db_url = db_url.replace("&pgbouncer=true", "")
+
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
