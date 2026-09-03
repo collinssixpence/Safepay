@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafePay | Merchant Portal</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 16px; }
+        
+        .container { max-width: 480px; width: 100%; margin: 20px auto; background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 12px; margin-bottom: 16px; }
+        h1 { color: #38bdf8; font-size: 1.25rem; margin: 0; }
+        .logout-btn { color: #ef4444; text-decoration: none; font-weight: 600; font-size: 0.875rem; }
+        
+        p { color: #94a3b8; font-size: 0.9rem; line-height: 1.4; }
+        label { display: block; margin-top: 14px; color: #cbd5e1; font-size: 0.875rem; font-weight: 600; }
+        input { width: 100%; padding: 12px; margin-top: 6px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 1rem; }
+        input:focus { outline: none; border-color: #38bdf8; }
+        
+        button { width: 100%; padding: 14px; margin-top: 20px; background: #38bdf8; border: none; border-radius: 8px; color: #0f172a; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
+        button:active { background: #0284c7; }
+        
+        .result-box { margin-top: 20px; padding: 16px; background: #0f172a; border-left: 4px solid #10b981; border-radius: 8px; display: none; }
+        .link-container { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .copy-btn { margin-top: 0; padding: 12px; background: #10b981; color: #0f172a; }
+        
+        @media (min-width: 480px) {
+            .container { padding: 28px; margin: 40px auto; }
+            .link-container { flex-direction: row; }
+            .copy-btn { width: auto; white-space: nowrap; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SafePay Portal</h1>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+        <p>Logged in as: <strong style="color: #fff;">{{ user.email }}</strong></p>
+        
+        <form id="orderForm">
+            <label for="merchant_phone">Your EcoCash Phone Number</label>
+            <input type="tel" id="merchant_phone" value="{{ user.merchant_phone }}" required>
+
+            <label for="buyer_phone">Buyer's Phone Number</label>
+            <input type="tel" id="buyer_phone" placeholder="+263772222222" required>
+
+            <label for="amount">Amount ($ USD)</label>
+            <input type="number" id="amount" step="0.01" placeholder="15.00" required>
+
+            <button type="submit">Generate SafePay Link</button>
+        </form>
+
+        <div id="resultBox" class="result-box">
+            <p style="color:#10b981; margin:0; font-weight:bold;">SafePay Link Created!</p>
+            <p style="font-size:0.85rem; margin-top:4px; margin-bottom:0;">Share this checkout link with your buyer:</p>
+            
+            <div class="link-container">
+                <input type="text" id="checkoutUrl" readonly>
+                <button type="button" class="copy-btn" id="copyBtn" onclick="copyLink()">Copy Link</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                merchant_phone: document.getElementById('merchant_phone').value,
+                buyer_phone: document.getElementById('buyer_phone').value,
+                amount: document.getElementById('amount').value
+            };
+
+            const response = await fetch('/api/orders/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                document.getElementById('resultBox').style.display = 'block';
+                document.getElementById('checkoutUrl').value = window.location.origin + '/checkout/' + result.order_ref;
+                document.getElementById('copyBtn').innerText = 'Copy Link';
+            } else {
+                alert('Error: ' + result.error);
+            }
+        });
+
+        function copyLink() {
+            const copyText = document.getElementById("checkoutUrl");
+            navigator.clipboard.writeText(copyText.value).then(() => {
+                const btn = document.getElementById("copyBtn");
+                btn.innerText = "Copied!";
+                setTimeout(() => { btn.innerText = "Copy Link"; }, 2000);
+            }).catch(() => {
+                alert("Failed to copy link");
+            });
+        }
+    </script>
+</body>
+</html>
